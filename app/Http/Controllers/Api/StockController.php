@@ -24,7 +24,7 @@ class StockController extends Controller
 
             return response()->json([
                 'message' => 'Stock entry created successfully',
-                'stock'   => $stock
+                'stock'   => $stock->load(['pharmacy', 'medicine']) // Load relationships for frontend clarity
             ], 201);
         } catch (Exception $exception) {
             return response()->json([
@@ -40,10 +40,42 @@ class StockController extends Controller
         try {
             $stocks = Stock::with(['pharmacy', 'medicine'])->get();
 
-            return response()->json($stocks, 200);
+            return response()->json([
+                'status' => 'success',
+                'count'  => $stocks->count(),
+                'data'   => $stocks
+            ], 200);
         } catch (Exception $exception) {
             return response()->json([
                 'message' => 'Failed to fetch stock list',
+                'error'   => $exception->getMessage()
+            ], 500);
+        }
+    }
+
+    // [READ BY MEDICINE] Find all pharmacies that have a specific medicine in stock
+    public function getPharmaciesByMedicine($medicineId)
+    {
+        try {
+            $stocks = Stock::with(['pharmacy', 'medicine'])
+                ->where('medicine_id', $medicineId)
+                ->where('in_stock', true)
+                ->get();
+
+            if ($stocks->isEmpty()) {
+                return response()->json([
+                    'message' => 'No pharmacies currently have this medicine in stock.'
+                ], 404);
+            }
+
+            return response()->json([
+                'status' => 'success',
+                'count'  => $stocks->count(),
+                'data'   => $stocks
+            ], 200);
+        } catch (Exception $exception) {
+            return response()->json([
+                'message' => 'Failed to fetch pharmacies for this medicine',
                 'error'   => $exception->getMessage()
             ], 500);
         }
@@ -53,7 +85,7 @@ class StockController extends Controller
     public function show($id)
     {
         try {
-            $stock = Stock::with(['pharmacy', 'medicine'])->where('id', $id)->first();
+            $stock = Stock::with(['pharmacy', 'medicine'])->find($id);
 
             if (!$stock) {
                 return response()->json([
@@ -61,7 +93,10 @@ class StockController extends Controller
                 ], 404);
             }
 
-            return response()->json($stock, 200);
+            return response()->json([
+                'status' => 'success',
+                'data'   => $stock
+            ], 200);
         } catch (Exception $exception) {
             return response()->json([
                 'message' => 'Failed to fetch stock entry',
@@ -81,7 +116,7 @@ class StockController extends Controller
         ]);
 
         try {
-            $stock = Stock::where('id', $id)->first();
+            $stock = Stock::find($id);
 
             if (!$stock) {
                 return response()->json([
@@ -93,7 +128,7 @@ class StockController extends Controller
 
             return response()->json([
                 'message' => 'Stock entry updated successfully!',
-                'stock'   => $stock
+                'stock'   => $stock->load(['pharmacy', 'medicine'])
             ], 200);
         } catch (Exception $exception) {
             return response()->json([
@@ -107,7 +142,7 @@ class StockController extends Controller
     public function destroy($id)
     {
         try {
-            $stock = Stock::where('id', $id)->first();
+            $stock = Stock::find($id);
 
             if ($stock) {
                 $stock->delete();
