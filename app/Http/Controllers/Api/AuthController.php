@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    // 📝 Register new user (defaults to 'patient')
+    // 📝 Register new user
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -20,12 +20,25 @@ class AuthController extends Controller
             'role'     => 'nullable|string|in:patient,pharmacist,admin',
         ]);
 
+        $role = $validated['role'] ?? 'patient';
+        // Pharmacists default to 'pending', others to 'approved'
+        $status = ($role === 'pharmacist') ? 'pending' : 'approved';
+
         $user = User::create([
             'name'     => $validated['name'],
             'email'    => $validated['email'],
             'password' => Hash::make($validated['password']),
-            'role'     => $validated['role'] ?? 'patient', // Default to 'patient'
+            'role'     => $role,
+            'status'   => $status,
         ]);
+
+        // If pending, do not issue a token
+        if ($user->status === 'pending') {
+            return response()->json([
+                'message' => 'Registration submitted successfully. Your pharmacy account is pending admin approval.',
+                'user'    => $user,
+            ], 201);
+        }
 
         $token = $user->createToken('auth_token')->plainTextToken;
 
@@ -48,9 +61,16 @@ class AuthController extends Controller
             return response()->json(['message' => 'Invalid credentials'], 401);
         }
 
-        /** @var \App\Models\User $user */   
-        //above line specify's that $user variable is an instance of models/user
+        /** @var \App\Models\User $user */
         $user = Auth::user();
+
+        // Block unapproved accounts from logging in
+        if ($user->status === 'pending') {
+            return response()->json([
+                'message' => 'Your account is currently pending admin approval.'
+            ], 403);
+        }
+
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([

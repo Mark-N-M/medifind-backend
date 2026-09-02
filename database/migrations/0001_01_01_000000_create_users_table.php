@@ -18,6 +18,7 @@ return new class extends Migration
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
             $table->string('role',20)->default('patient');
+            $table->string('status', 20)->default('approved');
             // $table->foreignId('pharmacy_id')->nullable()->constrained('pharmacies')->onDelete('set null');
             $table->unsignedBigInteger('pharmacy_id')->nullable(); //nullable coz users dont belong to any pharmacy
             $table->rememberToken();

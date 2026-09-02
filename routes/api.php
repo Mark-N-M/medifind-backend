@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\PharmacyController;
 use App\Http\Controllers\Api\MedicineController;
 use App\Http\Controllers\Api\StockController;
 use App\Http\Controllers\Api\AuthController;
+use App\Http\Controllers\Api\AdminController;
 
 // -------------------------------------------------------------
 // 🌐 1. Public Routes (Anyone can search catalog/stocks)
@@ -46,5 +47,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/medicines', [MedicineController::class, 'store']);
         Route::put('/medicines/{id}', [MedicineController::class, 'update']);
         Route::delete('/medicines/{id}', [MedicineController::class, 'destroy']);
+    });
+    
+    //Admin portal/pharmacists approval protected routes
+    Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
+        Route::get('/admin/pending-pharmacists', [AdminController::class, 'pendingPharmacists']);
+        Route::patch('/admin/approve-pharmacist/{id}', [AdminController::class, 'approvePharmacist']);
+        Route::patch('/admin/reject-pharmacist/{id}', [AdminController::class, 'rejectPharmacist']);
     });
 });
