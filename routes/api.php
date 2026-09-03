@@ -55,4 +55,12 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::patch('/admin/approve-pharmacist/{id}', [AdminController::class, 'approvePharmacist']);
         Route::patch('/admin/reject-pharmacist/{id}', [AdminController::class, 'rejectPharmacist']);
     });
+
+    //Pharmacists portal on crud functionality for stocks edits
+    Route::middleware(['auth:sanctum', 'role:pharmacist'])->group(function () {
+        Route::get('/pharmacist/stocks', [StockController::class, 'index']);
+        Route::post('/pharmacist/stocks', [StockController::class, 'store']);
+        Route::put('/pharmacist/stocks/{id}', [StockController::class, 'update']);
+        Route::delete('/pharmacist/stocks/{id}', [StockController::class, 'destroy']);
+    });
 });

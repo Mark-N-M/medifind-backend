@@ -9,22 +9,29 @@ use Illuminate\Http\Request;
 
 class StockController extends Controller
 {
-    // [CREATE] Link a medicine to a pharmacy with price & availability
+    // [CREATE] Link a medicine to the authenticated pharmacist's pharmacy
     public function store(Request $request)
     {
+        // Automatically inject pharmacy_id from authenticated user
+        $pharmacyId = $request->user()->pharmacy_id ?? $request->user()->pharmacy?->id;
+
         $validated = $request->validate([
-            'pharmacy_id' => 'required|exists:pharmacies,id',
             'medicine_id' => 'required|exists:medicines,id',
             'price'       => 'required|numeric|min:0',
             'in_stock'    => 'required|boolean',
         ]);
 
         try {
-            $stock = Stock::create($validated);
+            $stock = Stock::create([
+                'pharmacy_id' => $pharmacyId,
+                'medicine_id' => $validated['medicine_id'],
+                'price'       => $validated['price'],
+                'in_stock'    => $validated['in_stock'],
+            ]);
 
             return response()->json([
                 'message' => 'Stock entry created successfully',
-                'stock'   => $stock->load(['pharmacy', 'medicine']) // Load relationships for frontend clarity
+                'stock'   => $stock->load(['pharmacy', 'medicine'])
             ], 201);
         } catch (Exception $exception) {
             return response()->json([
@@ -34,11 +41,15 @@ class StockController extends Controller
         }
     }
 
-    // [READ ALL] Fetch all stock records with pharmacy & medicine details
-    public function index()
+    // [READ ALL] Fetch stock records ONLY for the logged-in pharmacist's pharmacy
+    public function index(Request $request)
     {
         try {
-            $stocks = Stock::with(['pharmacy', 'medicine'])->get();
+            $pharmacyId = $request->user()->pharmacy_id ?? $request->user()->pharmacy?->id;
+
+            $stocks = Stock::with(['pharmacy', 'medicine'])
+                ->where('pharmacy_id', $pharmacyId)
+                ->get();
 
             return response()->json([
                 'status' => 'success',
@@ -53,7 +64,7 @@ class StockController extends Controller
         }
     }
 
-    // [READ BY MEDICINE] Find all pharmacies that have a specific medicine in stock
+    // [READ BY MEDICINE] Public endpoint: Find all pharmacies that have a specific medicine in stock
     public function getPharmaciesByMedicine($medicineId)
     {
         try {
@@ -105,22 +116,26 @@ class StockController extends Controller
         }
     }
 
-    // [UPDATE] Update stock price or availability
+    // [UPDATE] Update stock price or availability (Secured to owner)
     public function update(Request $request, $id)
     {
+        $pharmacyId = $request->user()->pharmacy_id ?? $request->user()->pharmacy?->id;
+
         $validated = $request->validate([
-            'pharmacy_id' => 'sometimes|exists:pharmacies,id',
             'medicine_id' => 'sometimes|exists:medicines,id',
             'price'       => 'sometimes|numeric|min:0',
             'in_stock'    => 'sometimes|boolean',
         ]);
 
         try {
-            $stock = Stock::find($id);
+            // Find stock ensuring it belongs to the authenticated pharmacist's pharmacy
+            $stock = Stock::where('id', $id)
+                ->where('pharmacy_id', $pharmacyId)
+                ->first();
 
             if (!$stock) {
                 return response()->json([
-                    'message' => 'Stock entry not found'
+                    'message' => 'Stock entry not found or unauthorized'
                 ], 404);
             }
 
@@ -138,11 +153,15 @@ class StockController extends Controller
         }
     }
 
-    // [DELETE] Remove a stock entry
-    public function destroy($id)
+    // [DELETE] Remove a stock entry (Secured to owner)
+    public function destroy(Request $request, $id)
     {
         try {
-            $stock = Stock::find($id);
+            $pharmacyId = $request->user()->pharmacy_id ?? $request->user()->pharmacy?->id;
+
+            $stock = Stock::where('id', $id)
+                ->where('pharmacy_id', $pharmacyId)
+                ->first();
 
             if ($stock) {
                 $stock->delete();
@@ -153,7 +172,7 @@ class StockController extends Controller
             }
 
             return response()->json([
-                'message' => 'Stock entry not found'
+                'message' => 'Stock entry not found or unauthorized'
             ], 404);
         } catch (Exception $exception) {
             return response()->json([
