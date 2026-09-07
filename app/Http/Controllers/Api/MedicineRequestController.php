@@ -91,6 +91,22 @@ class MedicineRequestController extends Controller
             ], 500);
         }
     }
+    // [READ] Fetch requests created by the authenticated pharmacist
+    public function userRequests(Request $request)
+    {
+        try {
+            $requests = MedicineRequest::where('user_id', $request->user()->id)
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            return response()->json($requests, 200);
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'Failed to fetch user requests',
+                'error'   => $e->getMessage(),
+            ], 500);
+        }
+    }
 
     // [UPDATE] Admin rejects request
     public function reject($id)

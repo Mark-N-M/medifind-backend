@@ -12,8 +12,13 @@ class StockController extends Controller
     // [CREATE] Link a medicine to the authenticated pharmacist's pharmacy
     public function store(Request $request)
     {
-        // Automatically inject pharmacy_id from authenticated user
         $pharmacyId = $request->user()->pharmacy_id ?? $request->user()->pharmacy?->id;
+
+        if (!$pharmacyId) {
+            return response()->json([
+                'message' => 'Your user account is not associated with a pharmacy.'
+            ], 422);
+        }
 
         $validated = $request->validate([
             'medicine_id' => 'required|exists:medicines,id',
@@ -22,12 +27,17 @@ class StockController extends Controller
         ]);
 
         try {
-            $stock = Stock::create([
-                'pharmacy_id' => $pharmacyId,
-                'medicine_id' => $validated['medicine_id'],
-                'price'       => $validated['price'],
-                'in_stock'    => $validated['in_stock'],
-            ]);
+            // Update existing stock record or create a new one
+            $stock = Stock::updateOrCreate(
+                [
+                    'pharmacy_id' => $pharmacyId,
+                    'medicine_id' => $validated['medicine_id'],
+                ],
+                [
+                    'price'    => $validated['price'],
+                    'in_stock' => $validated['in_stock'],
+                ]
+            );
 
             return response()->json([
                 'message' => 'Stock entry created successfully',

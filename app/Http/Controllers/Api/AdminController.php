@@ -13,7 +13,8 @@ class AdminController extends Controller
     // 📋 Get all pending pharmacist applications
     public function pendingPharmacists()
     {
-        $pendingUsers = User::where('role', 'pharmacist')
+        $pendingUsers = User::with('pharmacy')
+                            ->where('role', 'pharmacist')
                             ->where('status', 'pending')
                             ->orderBy('created_at', 'desc')
                             ->get();

@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\StockController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminController;
 use App\Http\Controllers\Api\MedicineRequestController;
+use App\Http\Controllers\Api\PublicSearchController;
 use Illuminate\Http\Request;
 
 // -------------------------------------------------------------
@@ -16,8 +17,9 @@ Route::get('/pharmacies', [PharmacyController::class, 'index']);
 Route::get('/pharmacies/{id}', [PharmacyController::class, 'show']);
 Route::get('/medicines', [MedicineController::class, 'index']);
 Route::get('/stocks', [StockController::class, 'index']);
-// Public route to find all pharmacies stocking a specific medicine
 Route::get('/medicines/{medicineId}/pharmacies', [StockController::class, 'getPharmaciesByMedicine']);
+Route::get('/search/medicines', [PublicSearchController::class, 'searchMedicines']);
+Route::get('/public/pharmacies', [PublicSearchController::class, 'getPharmacies']);
 
 // -------------------------------------------------------------
 // 🔑 2. Authentication Routes
@@ -29,9 +31,12 @@ Route::post('/login', [AuthController::class, 'login']);
 // 🔐 3. Protected Routes (Requires valid Sanctum Bearer Token)
 // -------------------------------------------------------------
 Route::middleware('auth:sanctum')->group(function () {
-    
-    // Revoke current session token
-    Route::post('/logout', [AuthController::class, 'logout']);//post used to execute the controller class function assigned to the logout function in authcontroller
+
+    Route::post('/logout', [AuthController::class, 'logout']);
+
+    Route::get('/user', function (Request $request) {
+        return response()->json($request->user()->load('pharmacy'));
+    });
 
     // 👨‍⚕️ Gate A: Admin & Pharmacist (Manage Stock)
     Route::middleware('role:admin,pharmacist')->group(function () {
@@ -40,45 +45,38 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::delete('/stocks/{id}', [StockController::class, 'destroy']);
     });
 
-    // 👑 Gate B: Super Admin Only (Manage Pharmacies & Master Catalog)
-    Route::middleware('role:admin')->group(function () {
+    // 👑 Gate B: Super Admin Only
+    Route::middleware('role:admin')->prefix('admin')->group(function () {
+        // Pharmacy Management
         Route::post('/pharmacies', [PharmacyController::class, 'store']);
         Route::put('/pharmacies/{id}', [PharmacyController::class, 'update']);
         Route::delete('/pharmacies/{id}', [PharmacyController::class, 'destroy']);
         
+        // Medicine Catalog Management
         Route::post('/medicines', [MedicineController::class, 'store']);
         Route::put('/medicines/{id}', [MedicineController::class, 'update']);
         Route::delete('/medicines/{id}', [MedicineController::class, 'destroy']);
-    });
-    
-    //Admin portal/pharmacists approval protected routes
-    Route::middleware(['auth:sanctum', 'role:admin'])->group(function () {
-        Route::get('/admin/pending-pharmacists', [AdminController::class, 'pendingPharmacists']);
-        Route::patch('/admin/approve-pharmacist/{id}', [AdminController::class, 'approvePharmacist']);
-        Route::patch('/admin/reject-pharmacist/{id}', [AdminController::class, 'rejectPharmacist']);
+
+        // Pharmacist Account Approvals (Matches Axios requests)
+        Route::get('/pending-pharmacists', [AdminController::class, 'pendingPharmacists']);
+        Route::patch('/pharmacists/{id}/approve', [AdminController::class, 'approvePharmacist']);
+        Route::patch('/pharmacists/{id}/reject', [AdminController::class, 'rejectPharmacist']);
+
+        // Admin Medicine Requests Management
+        Route::get('/medicine-requests', [MedicineRequestController::class, 'index']);
+        Route::patch('/medicine-requests/{id}/approve', [MedicineRequestController::class, 'approve']);
+        Route::patch('/medicine-requests/{id}/reject', [MedicineRequestController::class, 'reject']);
     });
 
-    //Pharmacists portal on crud functionality for stocks edits
-    Route::middleware(['auth:sanctum', 'role:pharmacist'])->group(function () {
+    // 💊 Pharmacist Portal (Stock management & Medicine requests)
+    Route::middleware('role:pharmacist')->group(function () {
         Route::get('/pharmacist/stocks', [StockController::class, 'index']);
         Route::post('/pharmacist/stocks', [StockController::class, 'store']);
         Route::put('/pharmacist/stocks/{id}', [StockController::class, 'update']);
         Route::delete('/pharmacist/stocks/{id}', [StockController::class, 'destroy']);
+
+        Route::post('/medicine-requests', [MedicineRequestController::class, 'store']);
+        Route::get('/medicine-requests/my-requests', [MedicineRequestController::class, 'userRequests']);
     });
 
-    Route::middleware('auth:sanctum')->group(function () {
-    Route::get('/user', function (Request $request) {
-        return response()->json($request->user()->load('pharmacy'));
-     });    
-    });
-
-    Route::middleware(['auth:sanctum'])->group(function () {
-    // Pharmacist submits request
-    Route::post('/medicine-requests', [MedicineRequestController::class, 'store']);
-    
-    // Admin manages requests
-    Route::get('/admin/medicine-requests', [MedicineRequestController::class, 'index']);
-    Route::patch('/admin/medicine-requests/{id}/approve', [MedicineRequestController::class, 'approve']);
-    Route::patch('/admin/medicine-requests/{id}/reject', [MedicineRequestController::class, 'reject']);
-  });
 });
