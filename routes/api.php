@@ -6,6 +6,8 @@ use App\Http\Controllers\Api\MedicineController;
 use App\Http\Controllers\Api\StockController;
 use App\Http\Controllers\Api\AuthController;
 use App\Http\Controllers\Api\AdminController;
+use App\Http\Controllers\Api\MedicineRequestController;
+use Illuminate\Http\Request;
 
 // -------------------------------------------------------------
 // 🌐 1. Public Routes (Anyone can search catalog/stocks)
@@ -63,4 +65,20 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::put('/pharmacist/stocks/{id}', [StockController::class, 'update']);
         Route::delete('/pharmacist/stocks/{id}', [StockController::class, 'destroy']);
     });
+
+    Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', function (Request $request) {
+        return response()->json($request->user()->load('pharmacy'));
+     });    
+    });
+
+    Route::middleware(['auth:sanctum'])->group(function () {
+    // Pharmacist submits request
+    Route::post('/medicine-requests', [MedicineRequestController::class, 'store']);
+    
+    // Admin manages requests
+    Route::get('/admin/medicine-requests', [MedicineRequestController::class, 'index']);
+    Route::patch('/admin/medicine-requests/{id}/approve', [MedicineRequestController::class, 'approve']);
+    Route::patch('/admin/medicine-requests/{id}/reject', [MedicineRequestController::class, 'reject']);
+  });
 });

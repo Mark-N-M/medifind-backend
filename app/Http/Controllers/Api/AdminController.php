@@ -3,6 +3,8 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Medicine;
+use App\Models\MedicineRequest;
 use App\Models\User;
 use Illuminate\Http\Request;
 
@@ -41,6 +43,26 @@ class AdminController extends Controller
 
         return response()->json([
             'message' => "Pharmacist {$user->name} request rejected."
+        ]);
+    }
+    
+    public function approve($id)
+    {
+        $request = MedicineRequest::findOrFail($id);
+
+        // 1. Create global medicine entry
+        $medicine = Medicine::create([
+            'name' => $request->name,
+            'generic_name' => $request->generic_name,
+            'category' => $request->category,
+        ]);
+
+        // 2. Mark request as approved
+        $request->update(['status' => 'approved']);
+
+        return response()->json([
+            'message' => 'Medicine request approved and added to global catalog.',
+            'medicine' => $medicine,
         ]);
     }
 }
