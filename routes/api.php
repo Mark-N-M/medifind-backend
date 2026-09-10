@@ -16,6 +16,7 @@ use Illuminate\Http\Request;
 Route::get('/pharmacies', [PharmacyController::class, 'index']);
 Route::get('/pharmacies/{id}', [PharmacyController::class, 'show']);
 Route::get('/medicines', [MedicineController::class, 'index']);
+Route::get('/medicines/{id}', [MedicineController::class, 'show']);
 Route::get('/stocks', [StockController::class, 'index']);
 Route::get('/medicines/{medicineId}/pharmacies', [StockController::class, 'getPharmaciesByMedicine']);
 Route::get('/search/medicines', [PublicSearchController::class, 'searchMedicines']);

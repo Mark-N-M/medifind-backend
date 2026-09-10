@@ -41,6 +41,7 @@ class PublicSearchController extends Controller
                     'lowest_price' => $lowestPrice,
                     'available_pharmacies_count' => $availablePharmaciesCount,
                     'pharmacies' => $stocks->map(fn($s) => [
+                        'pharmacy_id' => $s->pharmacy_id ?? $s->pharmacy->id ?? null,
                         'pharmacy_name' => $s->pharmacy->name ?? 'Pharmacy',
                         'location' => $s->pharmacy->location ?? 'Nairobi',
                         'price' => $s->price,

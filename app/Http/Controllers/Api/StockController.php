@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
+use App\Models\Medicine;
 use App\Models\Stock;
 use Exception;
 use Illuminate\Http\Request;
@@ -75,25 +76,31 @@ class StockController extends Controller
     }
 
     // [READ BY MEDICINE] Public endpoint: Find all pharmacies that have a specific medicine in stock
-    public function getPharmaciesByMedicine($medicineId)
+  public function getPharmaciesByMedicine($medicineId)
     {
         try {
+            // 1. Check if the medicine itself exists
+            $medicine = Medicine::find($medicineId);
+            if (!$medicine) {
+                return response()->json([
+                    'message' => 'Medicine not found'
+                ], 404);
+            }
+
+            // 2. Fetch stocks associated with this medicine
             $stocks = Stock::with(['pharmacy', 'medicine'])
                 ->where('medicine_id', $medicineId)
                 ->where('in_stock', true)
                 ->get();
 
-            if ($stocks->isEmpty()) {
-                return response()->json([
-                    'message' => 'No pharmacies currently have this medicine in stock.'
-                ], 404);
-            }
-
+            // 3. Always return 200 OK when the medicine exists (even if $stocks is empty)
             return response()->json([
-                'status' => 'success',
-                'count'  => $stocks->count(),
-                'data'   => $stocks
+                'status'   => 'success',
+                'medicine' => $medicine,
+                'count'    => $stocks->count(),
+                'data'     => $stocks
             ], 200);
+
         } catch (Exception $exception) {
             return response()->json([
                 'message' => 'Failed to fetch pharmacies for this medicine',
