@@ -10,7 +10,7 @@ use Illuminate\Http\Request;
 
 class AdminController extends Controller
 {
-    // 📋 Get all pending pharmacist applications
+    //  Get all pending pharmacist applications
     public function pendingPharmacists()
     {
         $pendingUsers = User::with('pharmacy')
@@ -39,7 +39,7 @@ class AdminController extends Controller
         ]);
     }
 
-    // ❌ Reject a pharmacist
+    //  Reject a pharmacist
     public function rejectPharmacist($id)
     {
         $user = User::findOrFail($id);

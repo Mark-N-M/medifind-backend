@@ -17,6 +17,7 @@ class Pharmacy extends Model
         'phone',
         'latitude',
         'longitude',
+        'verified',
     ];
 
     // Converts latitude/longitude strings from DB into real PHP floating-point numbers
