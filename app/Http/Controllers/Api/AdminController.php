@@ -25,11 +25,14 @@ class AdminController extends Controller
         ]);
     }
 
-    // ✅ Approve a pharmacist
+        // Approve a pharmacist
     public function approvePharmacist($id)
     {
         $user = User::findOrFail($id);
-        $user->update(['status' => 'approved']);
+        $user->update(['status' => 'approved']);        
+        if ($user->pharmacy) {
+            $user->pharmacy->update(['verified' => true]);
+        }
 
         return response()->json([
             'message' => "Pharmacist {$user->name} approved successfully."

@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Hash;
 
 class AuthController extends Controller
 {
-    // 📝 Register new user
+    // Register new user
     public function register(Request $request)
     {
         $validated = $request->validate([
@@ -25,6 +25,7 @@ class AuthController extends Controller
             'location'      => 'required_if:role,pharmacist|nullable|string|max:255',
             'latitude'      => 'nullable|numeric',
             'longitude'     => 'nullable|numeric',
+            'phone' => 'required_if:role,pharmacist|nullable|string|max:20',
         ]);
 
         $role = $validated['role'] ?? 'patient';
@@ -42,6 +43,7 @@ class AuthController extends Controller
                     'location' => $validated['location'],
                     'latitude' => $validated['latitude'] ?? null,
                     'longitude' => $validated['longitude'] ?? null,
+                    'phone' => $validated['phone'] ?? null,
                 ]);
 
                 $pharmacyId = $pharmacy->id;
@@ -75,7 +77,7 @@ class AuthController extends Controller
         ], 201);
     }
 
-    // 🔑 Login existing user
+    // Log in function
     public function login(Request $request)
     {
         $credentials = $request->validate([
@@ -106,7 +108,7 @@ class AuthController extends Controller
         ], 200);
     }
 
-    // 🚪 Logout user (Revoke token)
+    // Logout user (deletion of token)
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();

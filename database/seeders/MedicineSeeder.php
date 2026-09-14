@@ -26,5 +26,29 @@ class MedicineSeeder extends Seeder
             'generic_name' => 'Antacid',
             'category' => 'Digestive Health',
         ]);
+
+        Medicine::create([
+            'name' => 'Piriton',
+            'generic_name' => 'Chlorphenamine Maleate',
+            'category' => 'Allergy',
+        ]);
+
+        Medicine::create([
+            'name' => 'Flagyl 400mg',
+            'generic_name' => 'Metronidazole',
+            'category' => 'Antibiotics',
+        ]);
+
+        Medicine::create([
+            'name' => 'Coartem',
+            'generic_name' => 'Artemether / Lumefantrine',
+            'category' => 'Antimalarial',
+        ]);
+
+        Medicine::create([
+            'name' => 'ORS Sachets',
+            'generic_name' => 'Oral Rehydration Salts',
+            'category' => 'Digestive Health',
+        ]);
     }
 }

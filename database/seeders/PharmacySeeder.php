@@ -18,6 +18,7 @@ class PharmacySeeder extends Seeder
             'phone' => '+254712345678',
             'latitude'=> -1.2676,
             'longitude'=> 36.8080,
+            'verified' => true,
         ]);
 
         Pharmacy::create([
@@ -26,6 +27,7 @@ class PharmacySeeder extends Seeder
             'phone'=>'+254722987654',
             'latitude'=> -1.2841,
             'longitude'=> 36.8248,
+            'verified' => true,
         ]);
 
         Pharmacy::create([
@@ -34,6 +36,7 @@ class PharmacySeeder extends Seeder
             'phone' => '+254733112233',
             'latitude' => -1.2918,
             'longitude' => 36.7865,
+            'verified' => true,
         ]);
     }
 }
