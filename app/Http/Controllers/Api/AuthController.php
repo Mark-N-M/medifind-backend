@@ -23,6 +23,8 @@ class AuthController extends Controller
             // Conditional pharmacy fields (required only if role is pharmacist)
             'pharmacy_name' => 'required_if:role,pharmacist|nullable|string|max:255',
             'location'      => 'required_if:role,pharmacist|nullable|string|max:255',
+            'latitude'      => 'nullable|numeric',
+            'longitude'     => 'nullable|numeric',
         ]);
 
         $role = $validated['role'] ?? 'patient';
@@ -38,6 +40,8 @@ class AuthController extends Controller
                 $pharmacy = Pharmacy::create([
                     'name'     => $validated['pharmacy_name'],
                     'location' => $validated['location'],
+                    'latitude' => $validated['latitude'] ?? null,
+                    'longitude' => $validated['longitude'] ?? null,
                 ]);
 
                 $pharmacyId = $pharmacy->id;
